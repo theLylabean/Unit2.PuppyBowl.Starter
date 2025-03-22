@@ -1,19 +1,35 @@
 // Use the API_URL variable to make fetch requests to the API.
 // Replace the placeholder with your cohort name (ex: 2109-UNF-HY-WEB-PT)
-const cohortName = "YOUR COHORT NAME HERE";
-const API_URL = `https://fsa-puppy-bowl.herokuapp.com/api/${cohortName}`;
+const cohortName = '2501-PUPPIES';
+const baseUrl = `https://fsa-puppy-bowl.herokuapp.com/api/${cohortName}/players`;
+
+const form = document.querySelector('#new-player-form');
+const main = document.querySelector('#main');
+
+const state = {
+  allPlayers: [],
+  singlePlayer: {},
+}
 
 /**
  * Fetches all players from the API.
  * @returns {Object[]} the array of player objects
  */
+// TODO
 const fetchAllPlayers = async () => {
   try {
-    // TODO
+    const res = await fetch(baseUrl);
+    console.log(res);
+    const result = await res.json();
+    console.log(result);
+
+    const allPlayers = result.data.players;
+    await renderAllPlayers(allPlayers);
   } catch (err) {
     console.error("Uh oh, trouble fetching players!", err);
   }
 };
+// fetchAllPlayers();
 
 /**
  * Fetches a single player from the API.
@@ -22,20 +38,35 @@ const fetchAllPlayers = async () => {
  */
 const fetchSinglePlayer = async (playerId) => {
   try {
-    // TODO
+    const res = await fetch(`${baseUrl}/${playerId}`);
+    console.log(res)
+    const result = await res.json();
+    console.log(result)
+
+    const singlePlayer = result.data.player;
+    renderSinglePlayer(singlePlayer)
   } catch (err) {
     console.error(`Oh no, trouble fetching player #${playerId}!`, err);
   }
 };
-
+// fetchSinglePlayer(29940);
 /**
  * Adds a new player to the roster via the API.
  * @param {Object} playerObj the player to add
  * @returns {Object} the player returned by the API
  */
 const addNewPlayer = async (playerObj) => {
+  console.log(playerObj)
   try {
     // TODO
+    const res = await fetch(baseUrl, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(playerObj)
+    })
+    const result = await res.json();
+    console.log(result);
+    fetchAllPlayers();
   } catch (err) {
     console.error("Oops, something went wrong with adding that player!", err);
   }
@@ -48,6 +79,10 @@ const addNewPlayer = async (playerObj) => {
 const removePlayer = async (playerId) => {
   try {
     // TODO
+    const res = await fetch(`${baseUrl}/${playerId}`, {
+      method: 'DELETE'
+    })
+    fetchAllPlayers()
   } catch (err) {
     console.error(
       `Whoops, trouble removing player #${playerId} from the roster!`,
@@ -75,8 +110,41 @@ const removePlayer = async (playerId) => {
  * Note: this function should replace the current contents of `<main>`, not append to it.
  * @param {Object[]} playerList - an array of player objects
  */
-const renderAllPlayers = (playerList) => {
+async function renderAllPlayers(playerList){
+  console.log(playerList)
+  state.allPlayers = playerList.map((player) =>{
+    const card = document.createElement('div');
+    card.classList.add('card');
+    card.innerHTML = `
+    <h1>Name: ${player.name}</h1>
+    <p>Id: ${player.id}</p>
+    <p>Breed: ${player.breed}</p>
+    <img id='pic' src=${player.imageUrl} />
+    <button id='delete'> Delete </button>
+    `
+    const deleteButton = card.querySelector('#delete')
+    deleteButton.addEventListener('click', () =>{
+      removePlayer(player.id)
+    })
+    const pic = card.querySelector('#pic')
+    pic.addEventListener('click', () => {
+      fetchSinglePlayer(player.id)
+    })
+    return card;
+    })
+    renderPlayers(state.allPlayers);
+    
+}
+
+async function renderPlayers(playerList){
   // TODO
+  if(Array.isArray(playerList)){
+    // console.log(playerList)
+    // console.log(...playerList)
+    main.replaceChildren(...playerList)
+  } else {
+    main.replaceChildren(playerList)
+  }
 };
 
 /**
@@ -94,6 +162,18 @@ const renderAllPlayers = (playerList) => {
  */
 const renderSinglePlayer = (player) => {
   // TODO
+  state.singlePlayer = document.createElement('div');
+  state.singlePlayer.classList.add('single')
+  state.singlePlayer.innerHTML = `
+  <h2>${player.name} </h2>
+  <p>${player.id} </p>
+  <p>${player.breed} </p>
+  <img src=${player.imageUrl} />
+  <button id='goBack'> Go Back </button>
+  `
+  renderPlayers(state.singlePlayer)
+  const goBack = state.singlePlayer.querySelector('#goBack');
+  goBack.addEventListener('click', () => {renderPlayers(state.allPlayers)})
 };
 
 /**
@@ -104,19 +184,36 @@ const renderSinglePlayer = (player) => {
 const renderNewPlayerForm = () => {
   try {
     // TODO
+    form.innerHTML =`
+    Name:
+      <input type="text" placeholder="Enter Name" name="name" />
+      Breed:
+      <input type="text" placeholder="Enter Breed" name="breed" />
+      Image:
+      <input type="text" placeholder="Enter Image URL" name="img" />
+      <button id='submit'> Submit </button>
+    `
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      console.log(form.name.value)
+      const formObj = {name:form.name.value, breed:form.breed.value, imageUrl:form.img.value}
+      addNewPlayer(formObj);
+      form.reset();
+    })
   } catch (err) {
     console.error("Uh oh, trouble rendering the new player form!", err);
   }
 };
-
+renderNewPlayerForm();
 /**
  * Initializes the app by fetching all players and rendering them to the DOM.
  */
 const init = async () => {
-  const players = await fetchAllPlayers();
-  renderAllPlayers(players);
+  fetchAllPlayers();
+  // const players = await fetchAllPlayers();
+  // renderPlayers(players);
 
-  renderNewPlayerForm();
+  // renderNewPlayerForm();
 };
 
 // This script will be run using Node when testing, so here we're doing a quick
