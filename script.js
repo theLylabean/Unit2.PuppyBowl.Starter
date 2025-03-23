@@ -132,6 +132,7 @@ async function renderAllPlayers(playerList){
     })
     return card;
     })
+    renderNewPlayerForm();
     renderPlayers(state.allPlayers);
     
 }
@@ -162,6 +163,7 @@ async function renderPlayers(playerList){
  */
 const renderSinglePlayer = (player) => {
   // TODO
+  form.innerHTML = ''
   state.singlePlayer = document.createElement('div');
   state.singlePlayer.classList.add('single')
   state.singlePlayer.innerHTML = `
@@ -173,7 +175,9 @@ const renderSinglePlayer = (player) => {
   `
   renderPlayers(state.singlePlayer)
   const goBack = state.singlePlayer.querySelector('#goBack');
-  goBack.addEventListener('click', () => {renderPlayers(state.allPlayers)})
+  goBack.addEventListener('click', () => {
+    renderNewPlayerForm();
+    renderPlayers(state.allPlayers)})
 };
 
 /**
@@ -181,7 +185,7 @@ const renderSinglePlayer = (player) => {
  * When the form is submitted, it should call `addNewPlayer`, fetch all players,
  * and then render all players to the DOM.
  */
-const renderNewPlayerForm = () => {
+async function renderNewPlayerForm(){
   try {
     // TODO
     form.innerHTML =`
